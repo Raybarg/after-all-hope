@@ -81,19 +81,22 @@ function setup() {
     createCanvas(1024, 530);
     //input = createInput('');
 
-    for (var x = 1; x < 99; x++) {
-        for (var y = 1; y < 99; y++ ) {
+    var x = 0;
+    var y = 0;
+
+    for (x = 1; x < 99; x++) {
+        for (y = 1; y < 99; y++ ) {
             gameMap[x+y*100] = 255;
         }
     }
 
-    for (var x = 30; x < 60; x++) {
-        for (var y = 30; y < 60; y++ ) {
+    for (x = 30; x < 60; x++) {
+        for (y = 30; y < 60; y++ ) {
             gameMap[x+y*100] = 0;
         }
     }
-    for (var x = 31; x < 59; x++) {
-        for (var y = 31; y < 59; y++ ) {
+    for (x = 31; x < 59; x++) {
+        for (y = 31; y < 59; y++ ) {
             gameMap[x+y*100] = 254;
         }
     }
