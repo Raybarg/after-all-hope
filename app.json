@@ -1,0 +1,8 @@
+{
+  "name": "After all hope",
+  "description": "Hobby roguelike game project",
+  "repository": "https://github.com/Raybarg/after-all-hope.git",
+  "logo": "",
+  "keywords": ["node", "express"],
+  "image": "nodejs"
+}
