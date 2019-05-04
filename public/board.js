@@ -78,7 +78,7 @@ function setup() {
     chatmessage = '';
     this.chatSystem = new ChatSystem();
     this.wsManager = new WSManager(ws);
-    createCanvas(1024, 530);
+    createCanvas(1024, 800);
     //input = createInput('');
 
     var x = 0;
@@ -151,21 +151,21 @@ function draw() {
     }
     var s = "coords: " + mouseX + ", "  + mouseY + "   [Clients: " + numOfClients + "]";
     var temp = textWidth(s);
-    text(s, (1024/2)-(temp/2),525);
+    text(s, (1024/2)-(temp/2), height);
 
     if (this.heartbeatLastTime < (millis()-4000)) {
         fill(color('red'));
         var errorMsg = "Disconnected";
         temp = textWidth(errorMsg);
-        text(errorMsg, 1024-temp,525);
+        text(errorMsg, 1024-temp, height);
     } else {
         fill(255);
         temp = textWidth(damessage);
-        text(damessage, 1024-temp,525);
+        text(damessage, 1024-temp, height);
     }
     fill(255);
 
-    text("After All Hope!",1,525);
+    text("After All Hope! v0.0.0a",1,height);
 }
 
 function mouseClicked() {
