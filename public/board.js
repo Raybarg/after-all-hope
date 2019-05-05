@@ -4,6 +4,7 @@ var dragging = 0;
 var globalX = 0;
 var globalY = 0;
 var imgTiles;
+var knight;
 var damessage;
 var input;
 var chatmessage;
@@ -60,6 +61,7 @@ ws.onmessage = function (event) {
 
 function preload() {
     imgTiles = loadImage("assets/PathAndObjects.png");
+    knight = loadImage("assets/knight.png");
 }
 
 function setup() {
@@ -106,18 +108,6 @@ function draw() {
     rect(0,510,1024,530);
     fill(255);
 
-    if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
-        moveOffset(0, -1);
-    }
-    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
-        moveOffset(0, 1);
-    }
-    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
-        moveOffset(1, 0);
-    } 
-    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
-        moveOffset(-1, 0);
-    }
     var wall;
     var grass;
     var water;
@@ -139,11 +129,13 @@ function draw() {
         }
     }
 
-    var player = imgTiles.get(224,416,32,32);
-    image(player, playerX*32 - globalX*32 ,playerY*32 - globalY*32);
+    //var player = imgTiles.get(224,416,32,32);
+    text("this is you!!!!", playerX*32 - globalX*32 - 20, playerY*32 - globalY*32 - 10);
+    image(knight, playerX*32 - globalX*32 ,playerY*32 - globalY*32);
 
     remotePlayers.forEach(rP => {
-        image(player, rP.x*32 - globalX*32, rP.y*32 - globalY*32);
+        text(rP.id, rP.x*32 - globalX*32 - 20, rP.y*32 - globalY*32 - 10);
+        image(knight, rP.x*32 - globalX*32, rP.y*32 - globalY*32);
     });
 
     text(`p: ${playerX},${playerY}`, 10,490);
@@ -177,6 +169,18 @@ function mouseDragged() {
 }
 
 function keyPressed() {
+    if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
+        moveOffset(0, -1);
+    }
+    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
+        moveOffset(0, 1);
+    }
+    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
+        moveOffset(1, 0);
+    } 
+    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
+        moveOffset(-1, 0);
+    }
 
 }
 
