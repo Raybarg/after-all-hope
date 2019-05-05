@@ -25,7 +25,24 @@ wss.getUniqueID = function () {
 wss.on('connection', (ws) => {
     console.log('Client connected');
     ws.id = wss.getUniqueID();
-    ws.on('close', () => console.log('Client disconnected'));
+    ws.on('close', () => {
+        // Send all clients message about disconnected remote user
+        var msg = {
+            type: 900,
+            id: ws.id,
+            x: 0,
+            y: 0,
+            msg: new Date().toTimeString(),
+            c: wss.clients.size
+        };
+        wss.clients.forEach((client) => {
+            if (client !== ws) {
+                client.send(JSON.stringify(msg));
+            }
+        });
+        console.log('Client disconnected');
+    });
+    
     ws.on('error', () => console.log('errored'));
     ws.onmessage = function(event) {
         var msg = JSON.parse(event.data);
@@ -70,7 +87,6 @@ setInterval(() => {
             c: wss.clients.size
         };
         client.send(JSON.stringify(msg));
-        //client.send(new Date().toTimeString());
     });
 }, 1000);
 

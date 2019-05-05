@@ -50,6 +50,11 @@ ws.onmessage = function (event) {
         case 3:
             //
             break;
+        case 900:
+            // Disconnected user
+            let rPid = remotePlayers.findIndex(rp => rp.id === msg.id);
+            remotePlayers.splice(rPid, 1);
+            break;
     }
 };
 
