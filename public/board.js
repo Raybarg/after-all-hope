@@ -4,13 +4,7 @@ var dragging = 0;
 var globalX = 0;
 var globalY = 0;
 var imgTiles;
-var board;
-var checker;
-var whoosh;
-var whoosh2;
-var ding;
 var damessage;
-var checkers = [];
 var input;
 var chatmessage;
 var chatSystem;
@@ -19,6 +13,7 @@ var wsManager;
 var numOfClients;
 var playerX = 1;
 var playerY = 1;
+var remotePlayers = [];
 
 var HOST = location.origin.replace(/^http/, 'ws');
 var ws = new WebSocket(HOST);
@@ -27,51 +22,39 @@ var el = document.getElementById('server-time');
 ws.onmessage = function (event) {
     var msg = JSON.parse(event.data);
     numOfClients = msg.c;
+    console.log(msg);
     switch(msg.type) {
         case 0:
             damessage = msg.msg;
             heartbeatLastTime = millis();
             break;
         case 1:
-            changeChecker(msg.id, msg.x, msg.y);
+            console.log("event");
+            
+            var bFound = false;
+            for (var i = 0; i < remotePlayers.length; i++) {
+                if (remotePlayers[i].id === msg.id) {
+                    bFound = true;
+                    remotePlayers[i].x = msg.x;
+                    remotePlayers[i].y = msg.y;
+                }
+            }
+            if (!bFound) {
+                remotePlayers.push(msg);
+            }
+            
             break;
         case 2:
             chatSystem.addItem(msg.msg);
             break;
         case 3:
-            checkers.push(new Checker(msg.id, msg.x, msg.y));
+            //
             break;
     }
 };
 
-function changeChecker(id, x, y) {
-    for (var i = checkers.length-1; i >= 0; i--) {
-        var p = checkers[i];
-        if (p.id == id) {
-            p.x = x;
-            p.y = y;
-        }
-    }
-}
-
 function preload() {
-    board = loadImage("assets/board.png");
-    checker = loadImage("assets/checker.png");
-
-    soundFormats('ogg');
-    whoosh = loadSound('assets/woosh1.ogg');
-    whoosh2 = loadSound('assets/woosh2.ogg');
-    ding = loadSound('assets/ding1.ogg');
-
-    whoosh.playMode('restart');
-    whoosh.setVolume(0.1);
-    whoosh2.playMode('restart');
-    whoosh2.setVolume(0.1);
-    ding.playMode('restart');
-    ding.setVolume(0.1);
-
     imgTiles = loadImage("assets/PathAndObjects.png");
-    
 }
 
 function setup() {
@@ -117,13 +100,6 @@ function draw() {
     noStroke();
     rect(0,510,1024,530);
     fill(255);
-    image(board, 0,0);
-    for (var i = checkers.length-1; i >= 0; i--) {
-        var p = checkers[i];
-        p.display();
-    }
-    text(chatmessage, 520,10);
-    chatSystem.draw();
 
     if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
         moveOffset(0, -1);
@@ -161,6 +137,10 @@ function draw() {
     var player = imgTiles.get(224,416,32,32);
     image(player, playerX*32 - globalX*32 ,playerY*32 - globalY*32);
 
+    remotePlayers.forEach(rP => {
+        image(player, rP.x*32 - globalX*32, rP.y*32 - globalY*32);
+    });
+
     text(`p: ${playerX},${playerY}`, 10,490);
     text(`g: ${globalX},${globalY}`, 10,500);
 
@@ -188,53 +168,19 @@ function mouseClicked() {
 }
 
 function mouseDragged() {
-    for (var i = checkers.length-1; i >= 0; i--) {
-        var p = checkers[i];
-        if (dragging < 0) {
-            if ((mouseX > p.x && mouseX-50 < p.x && mouseY > p.y && mouseY-50 < p.y) ) {
-                whoosh2.play();
-                dragging = p.id;
-            }
-        }
-        if (dragging == p.id) { 
-            p.x = mouseX-25;
-            p.y = mouseY-25;
-            dragging = p.id;
-            this.wsManager.SendCoords(p.id, p.x, p.y);
-        }
-    }
     
 }
 
 function keyPressed() {
-    if (keyCode === ENTER) {
-        this.wsManager.SendText(input.value());
-        input.value('');
-    }
+
 }
 
 function mousePressed() {
-    dragging = -1;
+
 }
 
 function mouseReleased() {
-    for (var i = checkers.length-1; i >= 0; i--) {
-        var p = checkers[i];
 
-        if (mouseX > p.x && mouseX-50 < p.x && mouseY > p.y && mouseY-50 < p.y && dragging >= 0) {
-            p.x = constrain(p.x, 1, 970);
-            p.y = constrain(p.y, 1, 460);
-            whoosh.play();
-            dragging = -1;
-            this.wsManager.SendCoords(p.id, p.x, p.y);
-        } else if (dragging < 0) {
-            if(mouseX > 0 && mouseX < 510 && mouseY > 0 && mouseY < 510) {
-                if (mouseX > p.x && mouseX-50 < p.x && mouseY > p.y && mouseY-50 < p.y) {
-                    ding.play();
-                }
-            }
-        }
-    }
 }
 
 function moveOffset(x, y) {
@@ -266,46 +212,9 @@ function moveOffset(x, y) {
     playerY = constrain(playerY, 0, 99);
     globalX = constrain(globalX, 0, 100-width/tileSize);
     globalY = constrain(globalY, 0, 100-height/tileSize);
+
+    if (playerX != oldPX || playerY != oldPY) {
+        this.wsManager.SendCoords(playerX, playerY);
+    }
     
-}
-
-/**
- * Movement offset
- * @param {*} x 
- * @param {*} y 
- */
-function moveOffset_critt(x, y) {
-    var oldPX = state.playerX;
-    var oldPY = state.playerY;
-    var oldGX = state.globalX;
-    var oldGY = state.globalY;
-
-    if (state.playerX < 400 || state.playerX > 1200) {
-        state.playerX += x * speed;
-    } else {
-        state.globalX += x * speed;
-        state.playerX += x * speed;
-    }
-    state.globalX = constrain(state.globalX, 0, width);
-    state.playerX = constrain(state.playerX, 0, 1536);
-
-    if (state.playerY < 300 || state.playerY > 900) {
-        state.playerY += y * speed;
-    } else {
-        state.globalY += y * speed;
-        state.playerY += y * speed;
-    }
-    state.globalY = constrain(state.globalY, 0, height);
-    state.playerY = constrain(state.playerY, 0 , 1136);
-
-    if (treeMgr.collide(state.playerX, state.playerY)) {
-        state.playerX = oldPX;
-        state.playerY = oldPY;
-        state.globalX = oldGX;
-        state.globalY = oldGY;
-        if (millis() - state.bonkTime > 1000) {
-            this.particles.addText("BONK!", state.playerX, state.playerY, 2);
-            state.bonkTime = millis();
-        }
-    }
 }

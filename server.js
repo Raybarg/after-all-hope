@@ -13,30 +13,28 @@ const server = express()
     .use((req, res) => res.sendFile(INDEX) )
     .listen(PORT, () => console.log(`Listening on ${ PORT }`));
 const wss = new SocketServer({ server });
-const checkers = [];
 var curId = 0;
-for (var i = 0; i < 8; i++) checkers.push(new Checker(curId++, 15, i*61 + 15));
-for (var i = 0; i < 8; i++) checkers.push(new Checker(curId++, 75, i*61 + 15));
-for (var i = 0; i < 8; i++) checkers.push(new Checker(curId++, 136, i*61 + 15));
+
+wss.getUniqueID = function () {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+    }
+    return s4() + s4() + '-' + s4();
+};
 
 wss.on('connection', (ws) => {
     console.log('Client connected');
+    ws.id = wss.getUniqueID();
     ws.on('close', () => console.log('Client disconnected'));
     ws.on('error', () => console.log('errored'));
     ws.onmessage = function(event) {
         var msg = JSON.parse(event.data);
-
         switch(msg.type) {
             case 0:
                 break;
             case 1:
-                msg.x = constrain(msg.x, 1, 970);
-                msg.y = constrain(msg.y, 1, 460);
-
-                checkers[msg.id].x = msg.x;
-                checkers[msg.id].y = msg.y;
-
                 msg.c = wss.clients.size;
+                msg.id = ws.id;
 
                 wss.clients.forEach((client) => {
                     if (client !== ws) {
@@ -44,6 +42,7 @@ wss.on('connection', (ws) => {
                     }
                 });
                 break;
+
             case 2:
                 msg.c = wss.clients.size;
                 wss.clients.forEach((client) => {
@@ -52,19 +51,6 @@ wss.on('connection', (ws) => {
                 break;
         }
     };
-    for(var i = 0; i < 24; i++) {
-        var msg = {
-            type: 3,
-            id: checkers[i].id,
-            x: checkers[i].x,
-            y: checkers[i].y,
-            msg: '',
-            c: wss.clients.size
-        };
-        ws.send(JSON.stringify(msg));
-    }
-    
-
 });
 
 function constrain(number, min, max) {
@@ -82,7 +68,7 @@ setInterval(() => {
             y: 0,
             msg: new Date().toTimeString(),
             c: wss.clients.size
-        }
+        };
         client.send(JSON.stringify(msg));
         //client.send(new Date().toTimeString());
     });
