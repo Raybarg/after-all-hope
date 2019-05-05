@@ -17,6 +17,8 @@ var chatSystem;
 var heartbeatLastTime;
 var wsManager;
 var numOfClients;
+var playerX = 1;
+var playerY = 1;
 
 var HOST = location.origin.replace(/^http/, 'ws');
 var ws = new WebSocket(HOST);
@@ -84,6 +86,12 @@ function setup() {
     var x = 0;
     var y = 0;
 
+    for (x = 0; x < 100; x++) {
+        for (y = 0; y < 100; y++ ) {
+            gameMap[x+y*100] = 0;
+        }
+    }
+
     for (x = 1; x < 99; x++) {
         for (y = 1; y < 99; y++ ) {
             gameMap[x+y*100] = 255;
@@ -149,6 +157,13 @@ function draw() {
             }
         }
     }
+
+    var player = imgTiles.get(224,416,32,32);
+    image(player, playerX*32 - globalX*32 ,playerY*32 - globalY*32);
+
+    text(`p: ${playerX},${playerY}`, 10,490);
+    text(`g: ${globalX},${globalY}`, 10,500);
+
     var s = "coords: " + mouseX + ", "  + mouseY + "   [Clients: " + numOfClients + "]";
     var temp = textWidth(s);
     text(s, (1024/2)-(temp/2), height);
@@ -223,10 +238,74 @@ function mouseReleased() {
 }
 
 function moveOffset(x, y) {
-    globalX += x;
-    globalY += y;
+    var oldPX = playerX;
+    var oldPY = playerY;
+    var oldGX = globalX;
+    var oldGY = globalY;
 
+    if (playerX < 16 || playerX > 83) {
+        playerX += x;
+    } else {
+        playerX += x;
+        globalX += x;
+    }
+    if (playerY < 12 || playerY > 88) {
+        playerY += y;
+    } else {
+        playerY += y;
+        globalY += y;
+    }
+    if (gameMap[(playerX)+(playerY)*100]===0) {
+        playerX = oldPX;
+        playerY = oldPY;
+        globalX = oldGX;
+        globalY = oldGY;
+    }
+
+    playerX = constrain(playerX, 0, 99);
+    playerY = constrain(playerY, 0, 99);
     globalX = constrain(globalX, 0, 100-width/tileSize);
     globalY = constrain(globalY, 0, 100-height/tileSize);
     
+}
+
+/**
+ * Movement offset
+ * @param {*} x 
+ * @param {*} y 
+ */
+function moveOffset_critt(x, y) {
+    var oldPX = state.playerX;
+    var oldPY = state.playerY;
+    var oldGX = state.globalX;
+    var oldGY = state.globalY;
+
+    if (state.playerX < 400 || state.playerX > 1200) {
+        state.playerX += x * speed;
+    } else {
+        state.globalX += x * speed;
+        state.playerX += x * speed;
+    }
+    state.globalX = constrain(state.globalX, 0, width);
+    state.playerX = constrain(state.playerX, 0, 1536);
+
+    if (state.playerY < 300 || state.playerY > 900) {
+        state.playerY += y * speed;
+    } else {
+        state.globalY += y * speed;
+        state.playerY += y * speed;
+    }
+    state.globalY = constrain(state.globalY, 0, height);
+    state.playerY = constrain(state.playerY, 0 , 1136);
+
+    if (treeMgr.collide(state.playerX, state.playerY)) {
+        state.playerX = oldPX;
+        state.playerY = oldPY;
+        state.globalX = oldGX;
+        state.globalY = oldGY;
+        if (millis() - state.bonkTime > 1000) {
+            this.particles.addText("BONK!", state.playerX, state.playerY, 2);
+            state.bonkTime = millis();
+        }
+    }
 }

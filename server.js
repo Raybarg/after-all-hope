@@ -51,7 +51,7 @@ wss.on('connection', (ws) => {
                 });
                 break;
         }
-    }
+    };
     for(var i = 0; i < 24; i++) {
         var msg = {
             type: 3,
