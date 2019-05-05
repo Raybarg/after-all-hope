@@ -21,40 +21,44 @@ var ws = new WebSocket(HOST);
 var el = document.getElementById('server-time');
 
 ws.onmessage = function (event) {
+    let rPid = -1;
     var msg = JSON.parse(event.data);
     numOfClients = msg.c;
-    console.log(msg);
     switch(msg.type) {
         case 0:
             damessage = msg.msg;
             heartbeatLastTime = millis();
             break;
         case 1:
-            console.log("event");
-            
-            var bFound = false;
-            for (var i = 0; i < remotePlayers.length; i++) {
-                if (remotePlayers[i].id === msg.id) {
-                    bFound = true;
-                    remotePlayers[i].x = msg.x;
-                    remotePlayers[i].y = msg.y;
-                }
-            }
-            if (!bFound) {
+            // Coordinate update
+            rPid = remotePlayers.findIndex(rp => rp.id === msg.id);
+            if (rPid >= 0) {
+                remotePlayers[rPid].x = msg.x;
+                remotePlayers[rPid].y = msg.y;
+            } else {
                 remotePlayers.push(msg);
             }
-            
             break;
         case 2:
-            chatSystem.addItem(msg.msg);
+            // Chatbubble update
+            rPid = remotePlayers.findIndex(rp => rp.id === msg.id);
+            if (rPid >= 0) {
+                remotePlayers[rPid].msg = msg.msg;
+                remotePlayers[rPid].msgTime = millis();
+            } else {
+                msg.msgTime = millis();
+                remotePlayers.push(msg);
+            }
             break;
         case 3:
             //
             break;
         case 900:
             // Disconnected user
-            let rPid = remotePlayers.findIndex(rp => rp.id === msg.id);
-            remotePlayers.splice(rPid, 1);
+            rPid = remotePlayers.findIndex(rp => rp.id === msg.id);
+            if (rPid >= 0) {
+                remotePlayers.splice(rPid, 1);
+            }
             break;
     }
 };
@@ -71,7 +75,12 @@ function setup() {
     this.chatSystem = new ChatSystem();
     this.wsManager = new WSManager(ws);
     createCanvas(1024, 800);
-    //input = createInput('');
+    input = createInput('');
+    input.id('diipadaa');
+    input.input(chatInput);
+    input.size(500,20);
+    input.position(1, height+20);
+    textAlign(CENTER);
 
     var x = 0;
     var y = 0;
@@ -129,12 +138,20 @@ function draw() {
         }
     }
 
-    //var player = imgTiles.get(224,416,32,32);
-    text("this is you!!!!", playerX*32 - globalX*32 - 20, playerY*32 - globalY*32 - 10);
+    textSize(12);
+    text("this is you!!!!", playerX*32 - globalX*32 + 16, playerY*32 - globalY*32 + 45);
     image(knight, playerX*32 - globalX*32 ,playerY*32 - globalY*32);
 
     remotePlayers.forEach(rP => {
-        text(rP.id, rP.x*32 - globalX*32 - 20, rP.y*32 - globalY*32 - 10);
+        if (rP.msg !== "") {
+            textSize(16);
+            textStyle(BOLD);
+            text(rP.msg, rP.x*32 - globalX*32 + 16, rP.y*32 - globalY*32 - 25);
+            if (millis() - rP.msgTime > 5000) rP.msg = "";
+            textSize(12);
+            textStyle(NORMAL);
+        }
+        text(rP.id, rP.x*32 - globalX*32 + 16, rP.y*32 - globalY*32 - 10);
         image(knight, rP.x*32 - globalX*32, rP.y*32 - globalY*32);
     });
 
@@ -169,19 +186,31 @@ function mouseDragged() {
 }
 
 function keyPressed() {
-    if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
-        moveOffset(0, -1);
+    if (!isChatFocused()) {
+        if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
+            moveOffset(0, -1);
+        }
+        if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
+            moveOffset(0, 1);
+        }
+        if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
+            moveOffset(1, 0);
+        } 
+        if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
+            moveOffset(-1, 0);
+        }
     }
-    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
-        moveOffset(0, 1);
+    if (keyIsDown(ENTER)) {
+        this.wsManager.SendText(input.value());
+        input.value('');        
     }
-    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
-        moveOffset(1, 0);
-    } 
-    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
-        moveOffset(-1, 0);
-    }
+}
 
+function chatInput() {
+    
+}
+function isChatFocused() {
+    return document.activeElement.id === 'diipadaa';
 }
 
 function mousePressed() {

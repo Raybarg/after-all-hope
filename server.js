@@ -54,14 +54,13 @@ wss.on('connection', (ws) => {
                 msg.id = ws.id;
 
                 wss.clients.forEach((client) => {
-                    if (client !== ws) {
-                        client.send(JSON.stringify(msg));
-                    }
+                    client.send(JSON.stringify(msg));
                 });
                 break;
 
             case 2:
                 msg.c = wss.clients.size;
+                msg.id = ws.id;
                 wss.clients.forEach((client) => {
                     client.send(JSON.stringify(msg));
                 });
