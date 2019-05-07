@@ -36,8 +36,10 @@ ws.onmessage = function (event) {
             if (rPid >= 0) {
                 remotePlayers[rPid].x = msg.x;
                 remotePlayers[rPid].y = msg.y;
-                globalX = msg.globalX;
-                globalY = msg.globalY;
+                if (msg.id === localID) {
+                    globalX = msg.globalX;
+                    globalY = msg.globalY;
+                }
             } else {
                 remotePlayers.push(msg);
             }
@@ -155,7 +157,7 @@ function draw() {
             textSize(16);
             textStyle(BOLD);
             text(rP.msg, rP.x*32 - globalX*32 + 16, rP.y*32 - globalY*32 - 25);
-            if (millis() - rP.msgTime > 5000) rP.msg = "";
+            if (millis() - rP.msgTime > 10000) rP.msg = "";
             textSize(12);
             textStyle(NORMAL);
         }

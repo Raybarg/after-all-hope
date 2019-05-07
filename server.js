@@ -58,7 +58,7 @@ wss.on('connection', (ws) => {
                 if (playerIdx >= 0) {
                     players[playerIdx].moveOffset(gameMap, msg.x, msg.y);
                 }
-                let resp = packet.coordinate(ws.id, players[playerIdx]);
+                let resp = packet.coordinate(players[playerIdx].id, players[playerIdx]);
                 wss.clients.forEach((client) => {
                     client.send(resp);
                 });

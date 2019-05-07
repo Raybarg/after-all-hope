@@ -1,5 +1,5 @@
 let helper = require('./helper.js');
-let server = require('./../server.js');
+
 class player {
     constructor(id, x, y) {
         this.id = id;
