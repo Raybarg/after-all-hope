@@ -15,6 +15,7 @@ var numOfClients;
 var playerX = 1;
 var playerY = 1;
 var remotePlayers = [];
+var localID = '';
 
 var HOST = location.origin.replace(/^http/, 'ws');
 var ws = new WebSocket(HOST);
@@ -53,6 +54,11 @@ ws.onmessage = function (event) {
         case 3:
             //
             break;
+        case 100:
+            // Server telling who I am
+            localID = msg.id;
+            remotePlayers.push(msg);
+            break;
         case 900:
             // Disconnected user
             rPid = remotePlayers.findIndex(rp => rp.id === msg.id);
@@ -80,7 +86,6 @@ function setup() {
     input.input(chatInput);
     input.size(500,20);
     input.position(1, height+20);
-    textAlign(CENTER);
 
     var x = 0;
     var y = 0;
@@ -139,8 +144,9 @@ function draw() {
     }
 
     textSize(12);
-    text("this is you!!!!", playerX*32 - globalX*32 + 16, playerY*32 - globalY*32 + 45);
-    image(knight, playerX*32 - globalX*32 ,playerY*32 - globalY*32);
+    textAlign(CENTER);
+    //text("this is you!!!!", playerX*32 - globalX*32 + 16, playerY*32 - globalY*32 + 45);
+    //image(knight, playerX*32 - globalX*32 ,playerY*32 - globalY*32);
 
     remotePlayers.forEach(rP => {
         if (rP.msg !== "") {
@@ -155,10 +161,12 @@ function draw() {
         image(knight, rP.x*32 - globalX*32, rP.y*32 - globalY*32);
     });
 
+    textAlign(LEFT);
     text(`p: ${playerX},${playerY}`, 10,490);
     text(`g: ${globalX},${globalY}`, 10,500);
 
-    var s = "coords: " + mouseX + ", "  + mouseY + "   [Clients: " + numOfClients + "]";
+    var s = `You are: ${localID}  |  coords ${mouseX}, ${mouseY}   [Clients: ${numOfClients}]`;
+    //var s = "coords: " + mouseX + ", "  + mouseY + "   [Clients: " + numOfClients + "]";
     var temp = textWidth(s);
     text(s, (1024/2)-(temp/2), height);
 
@@ -201,8 +209,14 @@ function keyPressed() {
         }
     }
     if (keyIsDown(ENTER)) {
-        this.wsManager.SendText(input.value());
-        input.value('');        
+        if (!isChatFocused()) {
+            let inp = document.getElementById('diipadaa');
+            inp.focus();
+        } else {
+            this.wsManager.SendText(input.value());
+            input.value('');
+            document.activeElement.blur();
+        }
     }
 }
 

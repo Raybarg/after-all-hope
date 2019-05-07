@@ -25,6 +25,15 @@ wss.getUniqueID = function () {
 wss.on('connection', (ws) => {
     console.log('Client connected');
     ws.id = wss.getUniqueID();
+    // Tell client who they are
+    ws.send(JSON.stringify({
+        type: 100,
+        id: ws.id,
+        x: 1,
+        y: 1,
+        msg: '',
+        c: wss.clients.size
+    }));
     ws.on('close', () => {
         // Send all clients message about disconnected remote user
         var msg = {
