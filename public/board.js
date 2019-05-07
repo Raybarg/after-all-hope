@@ -24,9 +24,9 @@ var el = document.getElementById('server-time');
 ws.onmessage = function (event) {
     let rPid = -1;
     var msg = JSON.parse(event.data);
-    numOfClients = msg.c;
     switch(msg.type) {
         case 0:
+            numOfClients = msg.c;
             damessage = msg.msg;
             heartbeatLastTime = millis();
             break;
@@ -36,6 +36,8 @@ ws.onmessage = function (event) {
             if (rPid >= 0) {
                 remotePlayers[rPid].x = msg.x;
                 remotePlayers[rPid].y = msg.y;
+                globalX = msg.globalX;
+                globalY = msg.globalY;
             } else {
                 remotePlayers.push(msg);
             }
@@ -82,7 +84,7 @@ function setup() {
     this.wsManager = new WSManager(ws);
     createCanvas(1024, 800);
     input = createInput('');
-    input.id('diipadaa');
+    input.id('chatInput');
     input.input(chatInput);
     input.size(500,20);
     input.position(1, height+20);
@@ -195,22 +197,27 @@ function mouseDragged() {
 
 function keyPressed() {
     if (!isChatFocused()) {
+        let moveX = 0;
+        let moveY = 0;
         if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
-            moveOffset(0, -1);
+            moveY = -1;
         }
         if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) {
-            moveOffset(0, 1);
+            moveY = 1;
         }
         if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
-            moveOffset(1, 0);
+            moveX = 1;
         } 
         if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
-            moveOffset(-1, 0);
+            moveX = -1;
+        }
+        if (moveX != 0 || moveY != 0) {
+            this.wsManager.SendCoords(moveX, moveY);            
         }
     }
     if (keyIsDown(ENTER)) {
         if (!isChatFocused()) {
-            let inp = document.getElementById('diipadaa');
+            let inp = document.getElementById('chatInput');
             inp.focus();
         } else {
             this.wsManager.SendText(input.value());
@@ -224,7 +231,7 @@ function chatInput() {
     
 }
 function isChatFocused() {
-    return document.activeElement.id === 'diipadaa';
+    return document.activeElement.id === 'chatInput';
 }
 
 function mousePressed() {
@@ -235,38 +242,3 @@ function mouseReleased() {
 
 }
 
-function moveOffset(x, y) {
-    var oldPX = playerX;
-    var oldPY = playerY;
-    var oldGX = globalX;
-    var oldGY = globalY;
-
-    if (playerX < 16 || playerX > 83) {
-        playerX += x;
-    } else {
-        playerX += x;
-        globalX += x;
-    }
-    if (playerY < 12 || playerY > 88) {
-        playerY += y;
-    } else {
-        playerY += y;
-        globalY += y;
-    }
-    if (gameMap[(playerX)+(playerY)*100]===0) {
-        playerX = oldPX;
-        playerY = oldPY;
-        globalX = oldGX;
-        globalY = oldGY;
-    }
-
-    playerX = constrain(playerX, 0, 99);
-    playerY = constrain(playerY, 0, 99);
-    globalX = constrain(globalX, 0, 100-width/tileSize);
-    globalY = constrain(globalY, 0, 100-height/tileSize);
-
-    if (playerX != oldPX || playerY != oldPY) {
-        this.wsManager.SendCoords(playerX, playerY);
-    }
-    
-}
